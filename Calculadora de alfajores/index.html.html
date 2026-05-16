@@ -1,0 +1,379 @@
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<h2 class="sr-only" style="display:none;">Calculadora de ingredientes y costos para alfajores</h2>
+
+<style>
+  :root {
+    --bg-dark: #12100E;
+    --bg-card: rgba(30, 26, 24, 0.7);
+    --bg-card-hover: rgba(45, 38, 35, 0.9);
+    --border-color: rgba(212, 163, 115, 0.2);
+    --accent-gold: #D4A373;
+    --accent-gold-hover: #E2B78D;
+    --text-primary: #FDFBF7;
+    --text-secondary: #C4B9A9;
+    --font-main: 'Outfit', sans-serif;
+  }
+
+  body {
+    background-color: var(--bg-dark);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+  }
+
+  .alf-wrap { 
+    font-family: var(--font-main);
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    padding: 2.5rem; 
+    border-radius: 16px;
+    width: 100%;
+    max-width: 800px;
+    margin: 2rem auto;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--border-color);
+    box-sizing: border-box;
+  }
+
+  .alf-header { margin-bottom: 2.5rem; text-align: center; }
+  .alf-title { font-size: 32px; font-weight: 600; color: var(--accent-gold); margin: 0 0 8px; letter-spacing: -0.5px; }
+  .alf-sub { font-size: 16px; color: var(--text-secondary); margin: 0; font-weight: 300; }
+
+  .slider-row { 
+    display: flex; align-items: center; gap: 20px; 
+    margin-bottom: 2rem; 
+    background: rgba(0,0,0,0.2);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .slider-label { font-size: 16px; color: var(--text-secondary); font-weight: 500; }
+  .slider-val { 
+    font-size: 28px; font-weight: 600; color: var(--accent-gold); 
+    min-width: 65px; text-align: right;
+  }
+  
+  input[type=range] {
+    flex: 1;
+    -webkit-appearance: none;
+    background: transparent;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 24px;
+    width: 24px;
+    border-radius: 50%;
+    background: var(--accent-gold);
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(212, 163, 115, 0.5);
+    transition: transform 0.2s, background 0.2s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+    background: var(--accent-gold-hover);
+  }
+
+  .quick-btns { display: flex; gap: 10px; margin-bottom: 2.5rem; flex-wrap: wrap; justify-content: center; }
+  .qbtn { 
+    font-family: var(--font-main);
+    font-size: 14px; padding: 8px 18px; 
+    border-radius: 30px; 
+    border: 1px solid var(--border-color); 
+    background: rgba(255, 255, 255, 0.03); 
+    cursor: pointer; color: var(--text-secondary); 
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+    backdrop-filter: blur(4px);
+  }
+  .qbtn:hover { background: rgba(212, 163, 115, 0.1); color: var(--text-primary); border-color: var(--accent-gold); transform: translateY(-2px); }
+  .qbtn.active { 
+    background: var(--accent-gold); 
+    color: var(--bg-dark); 
+    border-color: var(--accent-gold); 
+    font-weight: 600; 
+    box-shadow: 0 4px 15px rgba(212, 163, 115, 0.3);
+  }
+
+  .section-title { 
+    font-size: 14px; font-weight: 600; color: var(--accent-gold); 
+    letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 16px; 
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::after {
+    content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--border-color), transparent);
+  }
+
+  .ing-grid, .cost-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
+    gap: 16px; margin-bottom: 2.5rem; 
+  }
+  .ing-card, .cost-card { 
+    background: var(--bg-card); 
+    border: 1px solid rgba(255,255,255,0.03);
+    border-radius: 12px; padding: 20px 16px; 
+    backdrop-filter: blur(10px);
+    transition: transform 0.3s, background 0.3s, border-color 0.3s;
+    text-align: center;
+  }
+  .ing-card:hover, .cost-card:hover { 
+    transform: translateY(-4px); 
+    background: var(--bg-card-hover);
+    border-color: var(--border-color);
+  }
+  .ing-name, .cost-label { font-size: 14px; color: var(--text-secondary); margin: 0 0 8px; font-weight: 400; }
+  .ing-amount { font-size: 24px; font-weight: 600; color: var(--text-primary); margin: 0; }
+  .cost-val { font-size: 22px; font-weight: 500; color: var(--accent-gold); margin: 0; }
+
+  .toggle-wrap { margin-bottom: 2rem; }
+  .toggle-choc { 
+    display: inline-flex; align-items: center; gap: 12px; 
+    font-size: 16px; color: var(--text-primary); cursor: pointer; 
+    background: rgba(0,0,0,0.2);
+    padding: 12px 20px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.05);
+    transition: background 0.3s;
+  }
+  .toggle-choc:hover { background: rgba(255,255,255,0.05); }
+  
+  .toggle-choc input { display: none; }
+  .toggle-choc .check-mark {
+    width: 44px; height: 24px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    position: relative;
+    transition: background 0.3s;
+  }
+  .toggle-choc .check-mark::after {
+    content: ''; position: absolute;
+    top: 3px; left: 3px; width: 18px; height: 18px;
+    background: #fff; border-radius: 50%;
+    transition: transform 0.3s;
+  }
+  .toggle-choc input:checked + .check-mark { background: var(--accent-gold); }
+  .toggle-choc input:checked + .check-mark::after { transform: translateX(20px); }
+
+  .choc-note { font-size: 13px; color: var(--text-secondary); margin-top: 12px; font-style: italic; opacity: 0.8; }
+  .divider { border: none; border-top: 1px solid var(--border-color); margin: 2.5rem 0; opacity: 0.5; }
+
+  .total-card { 
+    background: linear-gradient(135deg, rgba(212,163,115,0.15) 0%, rgba(0,0,0,0.4) 100%); 
+    border: 1px solid var(--border-color); 
+    border-radius: 16px; padding: 24px 30px; 
+    display: flex; justify-content: space-between; align-items: center; 
+    margin-top: 1rem; 
+    position: relative;
+    overflow: hidden;
+  }
+  .total-card::before {
+    content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--accent-gold);
+  }
+  .total-label { font-size: 16px; color: var(--text-secondary); margin: 0 0 4px; }
+  .total-val { font-size: 36px; font-weight: 700; color: var(--text-primary); margin: 0; }
+  .per-unit { font-size: 15px; color: var(--text-secondary); text-align: right; margin: 4px 0 0; }
+  .per-unit span { color: var(--accent-gold); font-weight: 500; font-size: 17px; }
+
+  @media (max-width: 600px) {
+    .alf-wrap { padding: 1.2rem; margin: 0.5rem; border-radius: 12px; }
+    .alf-title { font-size: 26px; }
+    .slider-row { flex-direction: column; align-items: stretch; gap: 12px; padding: 1rem; }
+    .slider-val { text-align: center; margin-top: 5px; font-size: 24px; }
+    .quick-btns { gap: 6px; }
+    .qbtn { padding: 6px 12px; font-size: 13px; }
+    .ing-grid, .cost-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .ing-card, .cost-card { padding: 12px 10px; }
+    .ing-amount { font-size: 20px; }
+    .cost-val { font-size: 18px; }
+    .total-card { flex-direction: column; align-items: flex-start; gap: 12px; padding: 16px; }
+    .total-card > div:last-child { text-align: left !important; width: 100%; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px; }
+    .per-unit { text-align: left; font-size: 14px; }
+    .total-val { font-size: 28px; }
+  }
+  @media (max-width: 380px) {
+    .ing-grid, .cost-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="alf-wrap">
+  <div class="alf-header">
+    <p class="alf-title">Calculadora Gourmet</p>
+    <p class="alf-sub">Cotizador dinámico de costos de producción</p>
+  </div>
+
+  <div class="slider-row">
+    <span class="slider-label">Unidades a producir</span>
+    <input type="range" id="units-slider" min="12" max="720" step="12" value="180">
+    <span class="slider-val" id="units-display">180</span>
+  </div>
+
+  <div class="quick-btns" id="quick-btns">
+    <button class="qbtn" onclick="setUnits(12)">12</button>
+    <button class="qbtn" onclick="setUnits(24)">24</button>
+    <button class="qbtn" onclick="setUnits(48)">48</button>
+    <button class="qbtn" onclick="setUnits(60)">60</button>
+    <button class="qbtn" onclick="setUnits(120)">120</button>
+    <button class="qbtn active" onclick="setUnits(180)">180</button>
+    <button class="qbtn" onclick="setUnits(240)">240</button>
+    <button class="qbtn" onclick="setUnits(360)">360</button>
+    <button class="qbtn" onclick="setUnits(720)">720</button>
+  </div>
+
+  <p class="section-title">Ingredientes de Masa</p>
+  <div class="ing-grid" id="ing-grid"></div>
+
+  <div class="toggle-wrap">
+    <label class="toggle-choc">
+      <input type="checkbox" id="choc-toggle" checked>
+      <div class="check-mark"></div>
+      Incluir Bañado de Chocolate
+    </label>
+  </div>
+
+  <div id="choc-section">
+    <div class="ing-grid" id="choc-grid"></div>
+    <p class="choc-note" id="choc-note"></p>
+  </div>
+
+  <hr class="divider">
+
+  <p class="section-title">Desglose de Costos Estimados</p>
+  <div class="cost-grid" id="cost-grid"></div>
+
+  <div class="total-card">
+    <div>
+      <p class="total-label">Costo Total Producción</p>
+      <p class="total-val" id="total-val">$0</p>
+    </div>
+    <div style="text-align:right">
+      <p class="per-unit" id="per-unit-val">por unidad: <span>$0</span></p>
+      <p class="per-unit" id="per-dozen-val">por docena: <span>$0</span></p>
+    </div>
+  </div>
+</div>
+
+<script>
+const BASE = 180;
+const masa = [
+  { name: "Harina", baseG: 1500, unit: "g" },
+  { name: "Miel", baseG: 200, unit: "g" },
+  { name: "Huevos", baseG: 12, unit: "unidades", isCount: true },
+  { name: "Azúcar", baseG: 400, unit: "g" },
+  { name: "Bicarbonato", baseG: 40, unit: "g" },
+  { name: "Margarina", baseG: 200, unit: "g" },
+];
+
+const precios = {
+  harina:       { price: 1200, per: 1000 },
+  miel:         { price: 4000, per: 500 },
+  huevos:       { price: 3000, per: 12 },
+  azucar:       { price: 1100, per: 1000 },
+  bicarbonato:  { price: 750,  per: 50 },
+  margarina:    { price: 3600, per: 1000 },
+  chocolate:    { price: 13500, per: 1000 },
+  dulceleche:   { price: 5700, per: 1000 },
+  gas:          { price: 20000, per: 600 },
+};
+
+const CHOC_PER_DOCENA = 650;
+const DDL_BASE_G = 1000;
+
+function calcChocG(units) {
+  return Math.ceil((units / 24) * CHOC_PER_DOCENA);
+}
+
+function fmt(n) { return n.toLocaleString('es-AR'); }
+function fmtG(g) {
+  if (g >= 1000) return (g/1000).toFixed(g % 1000 === 0 ? 0 : 2).replace('.', ',') + " kg";
+  return g + " g";
+}
+
+function costOf(key, amount) {
+  const p = precios[key];
+  return (amount / p.per) * p.price;
+}
+
+function render(units) {
+  document.getElementById('units-display').textContent = units;
+
+  const factor = units / BASE;
+
+  const igrid = document.getElementById('ing-grid');
+  igrid.innerHTML = masa.map((ing, i) => {
+    const amt = ing.isCount ? Math.round(ing.baseG * factor) : Math.round(ing.baseG * factor);
+    const display = ing.isCount ? fmt(amt) : fmtG(amt);
+    return `<div class="ing-card"><p class="ing-name">${ing.name}</p><p class="ing-amount">${display}</p></div>`;
+  }).join('');
+
+  const ddlG = Math.round(DDL_BASE_G * factor);
+  const igDdl = document.getElementById('ing-grid');
+
+  const ddlCard = `<div class="ing-card"><p class="ing-name">Dulce de leche</p><p class="ing-amount">${fmtG(ddlG)}</p></div>`;
+  igrid.innerHTML += ddlCard;
+
+  const chocOn = document.getElementById('choc-toggle').checked;
+  document.getElementById('choc-section').style.display = chocOn ? '' : 'none';
+
+  const chocG = calcChocG(units);
+  const chocWaste = Math.round(350 * (units/24) / (24/24));
+  const chocNeeded = chocG;
+
+  if (chocOn) {
+    document.getElementById('choc-grid').innerHTML =
+      `<div class="ing-card"><p class="ing-name">Chocolate</p><p class="ing-amount">${fmtG(chocNeeded)}</p></div>`;
+
+    const sobra = Math.round(350 * (units / 24));
+    document.getElementById('choc-note').textContent =
+      `Basado en receta real: 1 kg de chocolate rinde 24 alfajores (sobran ~350 g). Para ${units} unidades se necesitan ~${fmtG(chocNeeded)}.`;
+  }
+
+  const costoHarina     = costOf('harina',      Math.round(1500*factor));
+  const costoMiel       = costOf('miel',         Math.round(200*factor));
+  const costoHuevos     = costOf('huevos',       Math.round(12*factor));
+  const costoAzucar     = costOf('azucar',       Math.round(400*factor));
+  const costoBicarbonato = costOf('bicarbonato', Math.round(40*factor));
+  const costoMargarina  = costOf('margarina',    Math.round(200*factor));
+  const costoDdl        = costOf('dulceleche',   ddlG);
+  const minGas          = 40 * factor;
+  const costoGas        = (minGas / 600) * precios.gas.price;
+  const costoChoc       = chocOn ? costOf('chocolate', chocG) : 0;
+
+  const subtotal = costoHarina + costoMiel + costoHuevos + costoAzucar + costoBicarbonato + costoMargarina + costoDdl + costoGas;
+  const total = subtotal + costoChoc;
+
+  const costos = [
+    { label: "Masa (insumos)", val: subtotal - costoGas - costoDdl },
+    { label: "Dulce de leche", val: costoDdl },
+    { label: "Gas (aprox.)", val: costoGas },
+    ...(chocOn ? [{ label: "Chocolate", val: costoChoc }] : []),
+  ];
+
+  document.getElementById('cost-grid').innerHTML = costos.map(c =>
+    `<div class="cost-card"><p class="cost-label">${c.label}</p><p class="cost-val">$${fmt(Math.round(c.val))}</p></div>`
+  ).join('');
+
+  document.getElementById('total-val').textContent = `$${fmt(Math.round(total))}`;
+  document.getElementById('per-unit-val').innerHTML = `por unidad: <span>$${(total/units).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '.')}</span>`;
+  document.getElementById('per-dozen-val').innerHTML = `por docena: <span>$${(total/units*12).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '.')}</span>`;
+
+  document.querySelectorAll('.qbtn').forEach(b => b.classList.remove('active'));
+  const presets = [12,24,48,60,120,180,240,360,720];
+  const idx = presets.indexOf(units);
+  if (idx >= 0) document.querySelectorAll('.qbtn')[idx].classList.add('active');
+}
+
+function setUnits(n) {
+  document.getElementById('units-slider').value = n;
+  render(n);
+}
+
+document.getElementById('units-slider').addEventListener('input', e => render(+e.target.value));
+document.getElementById('choc-toggle').addEventListener('change', () => render(+document.getElementById('units-slider').value));
+
+render(180);
+</script>
